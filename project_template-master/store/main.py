@@ -123,45 +123,93 @@ async def send_data_to_subscribers(user_id: int, data):
 
 # FastAPI CRUDL endpoints
 
-
 @app.post("/processed_agent_data/")
 async def create_processed_agent_data(data: List[ProcessedAgentData]):
-    # Insert data to database
-    # Send data to subscribers
-    pass
+    with SessionLocal() as db:
+        for item in data:
+            # Створюємо словник з даними для запису в БД
+            db_record = {
+                "road_state": item.road_state,
+                "user_id": item.agent_data.user_id,
+                "x": item.agent_data.accelerometer.x,
+                "y": item.agent_data.accelerometer.y,
+                "z": item.agent_data.accelerometer.z,
+                "latitude": item.agent_data.gps.latitude,
+                "longitude": item.agent_data.gps.longitude,
+                "timestamp": item.agent_data.timestamp,
+            }
+
+            # Зберігаємо в базу даних
+            stmt = processed_agent_data.insert().values(**db_record)
+            db.execute(stmt)
+            db.commit()
+
+            # Відправляємо дані підписникам через WebSockets
+            db_record["timestamp"] = db_record["timestamp"].isoformat()
+            await send_data_to_subscribers(item.agent_data.user_id, db_record)
+
+    return {"message": "Data successfully processed and saved"}
 
 
-@app.get(
-    "/processed_agent_data/{processed_agent_data_id}",
-    response_model=ProcessedAgentDataInDB,
-)
+@app.get("/processed_agent_data/{processed_agent_data_id}", response_model=ProcessedAgentDataInDB)
 def read_processed_agent_data(processed_agent_data_id: int):
-    # Get data by id
-    pass
+    with SessionLocal() as db:
+        stmt = processed_agent_data.select().where(processed_agent_data.c.id == processed_agent_data_id)
+        result = db.execute(stmt).first()
+
+        if result is None:
+            raise HTTPException(status_code=404, detail="Data not found")
+
+        return result._mapping
 
 
 @app.get("/processed_agent_data/", response_model=list[ProcessedAgentDataInDB])
 def list_processed_agent_data():
-    # Get list of data
-    pass
+    with SessionLocal() as db:
+        stmt = processed_agent_data.select()
+        result = db.execute(stmt).all()
+        return [row._mapping for row in result]
 
 
-@app.put(
-    "/processed_agent_data/{processed_agent_data_id}",
-    response_model=ProcessedAgentDataInDB,
-)
+@app.put("/processed_agent_data/{processed_agent_data_id}", response_model=ProcessedAgentDataInDB)
 def update_processed_agent_data(processed_agent_data_id: int, data: ProcessedAgentData):
-    # Update data
-    pass
+    with SessionLocal() as db:
+        stmt = processed_agent_data.update().where(
+            processed_agent_data.c.id == processed_agent_data_id
+        ).values(
+            road_state=data.road_state,
+            user_id=data.agent_data.user_id,
+            x=data.agent_data.accelerometer.x,
+            y=data.agent_data.accelerometer.y,
+            z=data.agent_data.accelerometer.z,
+            latitude=data.agent_data.gps.latitude,
+            longitude=data.agent_data.gps.longitude,
+            timestamp=data.agent_data.timestamp,
+        ).returning(processed_agent_data)
+
+        result = db.execute(stmt).first()
+
+        if result is None:
+            raise HTTPException(status_code=404, detail="Data not found")
+
+        db.commit()
+        return result._mapping
 
 
-@app.delete(
-    "/processed_agent_data/{processed_agent_data_id}",
-    response_model=ProcessedAgentDataInDB,
-)
+@app.delete("/processed_agent_data/{processed_agent_data_id}", response_model=ProcessedAgentDataInDB)
 def delete_processed_agent_data(processed_agent_data_id: int):
-    # Delete by id
-    pass
+    with SessionLocal() as db:
+        stmt = processed_agent_data.delete().where(
+            processed_agent_data.c.id == processed_agent_data_id
+        ).returning(processed_agent_data)
+
+        result = db.execute(stmt).first()
+
+        if result is None:
+            raise HTTPException(status_code=404, detail="Data not found")
+
+        db.commit()
+        return result._mapping
 
 
 if __name__ == "__main__":
