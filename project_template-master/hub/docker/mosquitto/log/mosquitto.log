@@ -60,3 +60,22 @@
 1773131730: Client auto-89C17627-9966-A89C-BD32-A9278300C3A6 [172.18.0.3:44157] disconnected: connection closed by client.
 1773131732: mosquitto version 2.1.2 terminating
 1773131732: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1773131759: mosquitto version 2.1.2 starting
+1773131759: Config loaded from /mosquitto/config/mosquitto.conf.
+1773131759: Bridge support available.
+1773131759: Persistence support available.
+1773131759: TLS support available.
+1773131759: TLS-PSK support available.
+1773131759: Websockets support available.
+1773131759: Opening ipv4 listen socket on port 1883.
+1773131759: Opening ipv6 listen socket on port 1883.
+1773131759: mosquitto version 2.1.2 running
+1773131763: New connection from 172.18.0.3:39283 on port 1883.
+1773131763: New client connected from 172.18.0.3:39283 as auto-581F939F-3B06-6EEE-B8C0-9C62A329EBBC (p4, c1, k60).
+1773131830: New connection from 172.18.0.1:52698 on port 1883.
+1773131830: New client connected from 172.18.0.1:52698 as mqtt-explorer-f6d8458c (p4, c1, k60).
+1773132618: Client mqtt-explorer-f6d8458c [172.18.0.1:52698] disconnected.
+1773132684: New connection from 172.18.0.1:52744 on port 1883.
+1773132684: New client connected from 172.18.0.1:52744 as mqtt-explorer-f6d8458c (p4, c1, k60).
+1773132709: Client mqtt-explorer-f6d8458c [172.18.0.1:52744] disconnected.
+1773133558: Saving in-memory database to /mosquitto/data//mosquitto.db.
