@@ -1,0 +1,13 @@
+[project]
+name = "embeded-iot-group6"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "marshmallow>=4.2.2",
+    "paho-mqtt>=2.1.0",
+    "pydantic>=2.12.5",
+    "pytest>=9.0.2",
+    "requests>=2.32.5",
+]

@@ -14,6 +14,7 @@ class GpsData(BaseModel):
 
 
 class AgentData(BaseModel):
+    user_id: int = 1
     accelerometer: AccelerometerData
     gps: GpsData
     timestamp: datetime
@@ -21,7 +22,6 @@ class AgentData(BaseModel):
     @classmethod
     @field_validator("timestamp", mode="before")
     def parse_timestamp(cls, value):
-        # Convert the timestamp to a datetime object
         if isinstance(value, datetime):
             return value
         try:
