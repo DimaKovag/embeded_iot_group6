@@ -1,6 +1,5 @@
 import logging
 
-import requests as requests
 from paho.mqtt import client as mqtt_client
 
 from app.entities.processed_agent_data import ProcessedAgentData
@@ -8,40 +7,47 @@ from app.interfaces.hub_gateway import HubGateway
 
 
 class HubMqttAdapter(HubGateway):
+    """MQTT-адаптер для передачі оброблених даних у hub."""
+
     def __init__(self, broker, port, topic):
         self.broker = broker
         self.port = port
         self.topic = topic
         self.mqtt_client = self._connect_mqtt(broker, port)
 
-    def save_data(self, processed_data: ProcessedAgentData):
-        """
-        Save the processed road data to the Hub.
-        Parameters:
-            processed_data (ProcessedAgentData): Processed road data to be saved.
-        Returns:
-            bool: True if the data is successfully saved, False otherwise.
+    def save_data(self, processed_data: ProcessedAgentData) -> bool:
+        """Публікує оброблені дані в MQTT-топік hub.
+
+        Parameters
+        ----------
+        processed_data : ProcessedAgentData
+            Оброблені дані агента.
+
+        Returns
+        -------
+        bool
+            True, якщо публікація успішна, інакше False.
         """
         msg = processed_data.model_dump_json()
         result = self.mqtt_client.publish(self.topic, msg)
         status = result[0]
+
         if status == 0:
             return True
-        else:
-            print(f"Failed to send message to topic {self.topic}")
-            return False
+
+        logging.error(f"Failed to send message to topic {self.topic}")
+        return False
 
     @staticmethod
     def _connect_mqtt(broker, port):
-        """Create MQTT client"""
-        print(f"CONNECT TO {broker}:{port}")
+        """Створює та підключає MQTT-клієнт."""
+        logging.info(f"CONNECT TO {broker}:{port}")
 
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
-                print(f"Connected to MQTT Broker ({broker}:{port})!")
+                logging.info(f"Connected to MQTT Broker ({broker}:{port})!")
             else:
-                print("Failed to connect {broker}:{port}, return code %d\n", rc)
-                exit(rc)  # Stop execution
+                logging.error(f"Failed to connect {broker}:{port}, return code {rc}")
 
         client = mqtt_client.Client()
         client.on_connect = on_connect
