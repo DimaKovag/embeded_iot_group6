@@ -32,6 +32,8 @@ HUB_URL = f"http://{HUB_HOST}:{HUB_PORT}"
 # Configuration for data processing
 ROAD_AXIS = os.environ.get("ROAD_AXIS") or "z"
 
-SMOOTHING_WINDOW = try_parse_int(os.environ.get("SMOOTHING_WINDOW")) or 3
+SMOOTHING_WINDOW = try_parse_int(os.environ.get("SMOOTHING_WINDOW")) or 1
+
+Z_BASELINE = try_parse_float(os.environ.get("Z_BASELINE")) or 8.0
 SMOOTH_THRESHOLD = try_parse_float(os.environ.get("SMOOTH_THRESHOLD")) or 2.0
-UNEVEN_THRESHOLD = try_parse_float(os.environ.get("UNEVEN_THRESHOLD")) or 5.0
+BUMP_THRESHOLD = try_parse_float(os.environ.get("BUMP_THRESHOLD")) or 8.0

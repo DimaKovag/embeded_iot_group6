@@ -1,14 +1,16 @@
 import asyncio
 import json
 from datetime import datetime
+
 import websockets
 from kivy import Logger
 from pydantic import BaseModel, field_validator
+
 from config import STORE_HOST, STORE_PORT
 
 
-# Pydantic models
 class ProcessedAgentData(BaseModel):
+    """Модель оброблених даних агента для відображення на мапі."""
     road_state: str
     user_id: int
     x: float
@@ -21,63 +23,81 @@ class ProcessedAgentData(BaseModel):
     @classmethod
     @field_validator("timestamp", mode="before")
     def check_timestamp(cls, value):
+        """Перетворює timestamp у datetime."""
         if isinstance(value, datetime):
             return value
+
+        if isinstance(value, str):
+            value = value.replace("Z", "+00:00")
+
         try:
             return datetime.fromisoformat(value)
         except (TypeError, ValueError):
-            raise ValueError(
-                "Invalid timestamp format. Expected ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ)."
-            )
+            raise ValueError("Invalid timestamp format. Expected ISO 8601 format.")
 
 
 class Datasource:
+    """Джерело даних для отримання точок маршруту через WebSocket."""
+
     def __init__(self, user_id: int):
         self.index = 0
         self.user_id = user_id
-        self.connection_status = None
+        self.connection_status = "Disconnected"
         self._new_points = []
         asyncio.ensure_future(self.connect_to_server())
 
     def get_new_points(self):
-        Logger.debug(self._new_points)
+        """Повертає нові точки та очищає внутрішній буфер."""
         points = self._new_points
         self._new_points = []
         return points
 
     async def connect_to_server(self):
+        """Підключається до WebSocket-сервера та безперервно читає дані."""
         uri = f"ws://{STORE_HOST}:{STORE_PORT}/ws/{self.user_id}"
+
         while True:
-            Logger.debug("CONNECT TO SERVER")
-            async with websockets.connect(uri) as websocket:
-                self.connection_status = "Connected"
-                try:
+            try:
+                Logger.info(f"MapView: connect to {uri}")
+                async with websockets.connect(uri) as websocket:
+                    self.connection_status = "Connected"
+
                     while True:
                         data = await websocket.recv()
                         self.handle_received_data(data)
-                except websockets.ConnectionClosedOK:
-                    self.connection_status = "Disconnected"
-                    Logger.debug("SERVER DISCONNECT")
+
+            except websockets.ConnectionClosed:
+                self.connection_status = "Disconnected"
+                Logger.warning("MapView: server disconnected")
+            except Exception as e:
+                self.connection_status = "Disconnected"
+                Logger.error(f"MapView: websocket error: {e}")
+
+            await asyncio.sleep(1)
 
     def handle_received_data(self, data):
-        Logger.debug(f"Received data: {data}")
+        """Обробляє отримані WebSocket-дані та додає нові точки в буфер."""
+        try:
+            parsed = json.loads(data)
 
-        parsed = json.loads(data)
-        if isinstance(parsed, str):
-            parsed = json.loads(parsed)
-        if isinstance(parsed, dict):
-            parsed = [parsed]
+            if isinstance(parsed, str):
+                parsed = json.loads(parsed)
+            if isinstance(parsed, dict):
+                parsed = [parsed]
+            if not isinstance(parsed, list):
+                Logger.warning("MapView: unsupported payload format")
+                return
 
-        processed_agent_data_list = sorted(
-            [ProcessedAgentData(**item) for item in parsed],
-            key=lambda v: v.timestamp,
-        )
-        new_points = [
-            (
-                p.longitude,
-                p.latitude,
-                p.road_state,
+            processed_agent_data_list = sorted(
+                [ProcessedAgentData(**item) for item in parsed],
+                key=lambda v: v.timestamp,
             )
-            for p in processed_agent_data_list
-        ]
-        self._new_points.extend(new_points)
+
+            new_points = [
+                (p.longitude, p.latitude, p.road_state)
+                for p in processed_agent_data_list
+            ]
+            self._new_points.extend(new_points)
+
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
+            Logger.error(f"MapView: invalid incoming data: {e}")

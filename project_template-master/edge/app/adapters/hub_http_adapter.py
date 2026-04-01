@@ -1,29 +1,49 @@
 import logging
 
-import requests as requests
+import requests
 
 from app.entities.processed_agent_data import ProcessedAgentData
 from app.interfaces.hub_gateway import HubGateway
 
 
 class HubHttpAdapter(HubGateway):
+    """HTTP-адаптер для відправлення оброблених даних у hub."""
+
     def __init__(self, api_base_url):
         self.api_base_url = api_base_url
 
-    def save_data(self, processed_data: ProcessedAgentData):
-        """
-        Save the processed road data to the Hub.
-        Parameters:
-            processed_data (ProcessedAgentData): Processed road data to be saved.
-        Returns:
-            bool: True if the data is successfully saved, False otherwise.
+    def save_data(self, processed_data: ProcessedAgentData) -> bool:
+        """Надсилає оброблені дані в hub через HTTP.
+
+        Parameters
+        ----------
+        processed_data : ProcessedAgentData
+            Оброблені дані агента.
+
+        Returns
+        -------
+        bool
+            True, якщо дані успішно відправлені, інакше False.
         """
         url = f"{self.api_base_url}/processed_agent_data/"
 
-        response = requests.post(url, data=processed_data.model_dump_json())
+        try:
+            response = requests.post(
+                url,
+                data=processed_data.model_dump_json(),
+                headers={"Content-Type": "application/json"},
+                timeout=10,
+            )
+        except requests.RequestException as e:
+            logging.error(f"Hub HTTP request failed: {e}")
+            return False
+
         if response.status_code != 200:
-            logging.info(
-                f"Invalid Hub response\nData: {processed_data.model_dump_json()}\nResponse: {response}"
+            logging.error(
+                f"Invalid Hub response\n"
+                f"Data: {processed_data.model_dump_json()}\n"
+                f"Response: {response.status_code} {response.text}"
             )
             return False
+
         return True
