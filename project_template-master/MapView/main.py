@@ -1,7 +1,7 @@
 from collections import deque
 import asyncio
 from kivy.app import App
-from kiv import App
+# from kivy import App
 from kivy_garden.mapview import MapMarker, MapView
 from kivy.clock import Clock
 from lineMapLayer import LineMapLayer
