@@ -54,28 +54,30 @@ class Datasource:
                 try:
                     while True:
                         data = await websocket.recv()
-                        parsed_data = json.loads(data)
-                        self.handle_received_data(parsed_data)
+                        self.handle_received_data(data)
                 except websockets.ConnectionClosedOK:
                     self.connection_status = "Disconnected"
                     Logger.debug("SERVER DISCONNECT")
 
     def handle_received_data(self, data):
-        # Update your UI or perform actions with received data here
         Logger.debug(f"Received data: {data}")
+
+        parsed = json.loads(data)
+        if isinstance(parsed, str):
+            parsed = json.loads(parsed)
+        if isinstance(parsed, dict):
+            parsed = [parsed]
+
         processed_agent_data_list = sorted(
-            [
-                ProcessedAgentData(**processed_data_json)
-                for processed_data_json in json.loads(data)
-            ],
+            [ProcessedAgentData(**item) for item in parsed],
             key=lambda v: v.timestamp,
         )
         new_points = [
             (
-                processed_agent_data.latitude,
-                processed_agent_data.longitude,
-                processed_agent_data.road_state,
+                p.longitude,
+                p.latitude,
+                p.road_state,
             )
-            for processed_agent_data in processed_agent_data_list
+            for p in processed_agent_data_list
         ]
         self._new_points.extend(new_points)

@@ -7,10 +7,12 @@ from math import radians, log, tan, cos, pi
 
 
 class LineMapLayer(MapLayer):
-    def __init__(self, coordinates=None, color=[0, 0, 1, 1], width=2, **kwargs):
+    def __init__(self, coordinates=None, color=None, width=2, **kwargs):
         super().__init__(**kwargs)
         # if coordinates is None:
         #     coordinates = [[0, 0], [0, 0]]
+        if color is None:
+            color = [0, 0, 1, 1]
         self._coordinates = coordinates
         self.color = color
         self._line_points = None
