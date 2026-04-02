@@ -14,7 +14,7 @@ class MapViewApp(App):
         self.datasource = Datasource(user_id=1)
         self.line_layer = LineMapLayer(color=[0.5, 0, 1, 1], width=6)
         self.car_marker = None
-        self.path_points = deque(maxlen=MAX_PATH) # store (lat, lon) tuples for the car's path
+        self.path_points = deque(maxlen=MAX_PATH)
         self.prev_lat, self.prev_lon = 0, 0
 
         # Keep track of all potholes and bumps to avoid repetition
@@ -105,9 +105,6 @@ class MapViewApp(App):
         for lat, lon, road_state, timestamp in self.pending_points:
             self.place_road_state_marker(lat, lon, road_state, timestamp)
         self.pending_points.clear()
-
-        if len(self.path_points) > MAX_PATH:
-            self.path_points = self.path_points[-MAX_PATH:]
         self.line_layer.coordinates = [(lat, lon) for lat, lon, _ in self.path_points]
 
     def set_pothole_marker(self, lat, lon):

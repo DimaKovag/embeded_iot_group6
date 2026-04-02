@@ -94,7 +94,7 @@ class Datasource:
             )
 
             new_points = [
-                (p.longitude, p.latitude, p.road_state, p.timestamp)
+                (p.latitude, p.longitude, p.road_state, p.timestamp)
                 for p in processed_agent_data_list
             ]
             self._new_points.extend(new_points)
