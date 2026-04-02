@@ -48,8 +48,8 @@ class Datasource:
 
     def get_new_points(self):
         """Повертає нові точки та очищає внутрішній буфер."""
-        points = self._new_points
-        self._new_points = []
+        points = self._new_points.copy()
+        self._new_points.clear()
         return points
 
     async def connect_to_server(self):
@@ -94,7 +94,7 @@ class Datasource:
             )
 
             new_points = [
-                (p.longitude, p.latitude, p.road_state)
+                (p.latitude, p.longitude, p.road_state, p.timestamp)
                 for p in processed_agent_data_list
             ]
             self._new_points.extend(new_points)
