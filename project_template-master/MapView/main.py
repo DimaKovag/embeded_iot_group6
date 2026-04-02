@@ -1,5 +1,5 @@
+from collections import deque
 import asyncio
-
 from kivy.app import App
 from kivy_garden.mapview import MapMarker, MapView
 from kivy.clock import Clock
@@ -14,7 +14,7 @@ class MapViewApp(App):
         self.datasource = Datasource(user_id=1)
         self.line_layer = LineMapLayer(color=[0.5, 0, 1, 1], width=6)
         self.car_marker = None
-        self.path_points = [] # store (lat, lon) tuples for the car's path
+        self.path_points = deque(maxlen=MAX_PATH) # store (lat, lon) tuples for the car's path
         self.prev_lat, self.prev_lon = 0, 0
 
         # Keep track of all potholes and bumps to avoid repetition
@@ -65,7 +65,16 @@ class MapViewApp(App):
         self.path_points.append((lat, lon, timestamp))
 
     def update_car_marker(self, lat, lon):
-        """Оновлює відображення маркера машини на мапі"""
+        """
+        Оновлює дані маркера машини на мапі.
+
+        Parameters
+        ----------
+        lat : float
+            Широта поточної позиції.
+        lon : float
+            Довгота поточної позиції.
+        """
         self.car_marker.lat = lat
         self.car_marker.lon = lon
         self.mapview.trigger_update(False)
@@ -102,7 +111,16 @@ class MapViewApp(App):
         self.line_layer.coordinates = [(lat, lon) for lat, lon, _ in self.path_points]
 
     def set_pothole_marker(self, lat, lon):
-        """Встановлює маркер для ями"""
+        """
+        Встановлює маркер для ями.
+
+        Parameters
+        ----------
+        lat : float
+            Широта позиції ями.
+        lon : float
+            Довгота позиції ями.
+        """
         key = (round(lat, 5), round(lon, 5))
         if key in self.potholes:
             return
@@ -112,7 +130,16 @@ class MapViewApp(App):
         self.mapview.add_widget(marker)
 
     def set_bump_marker(self, lat, lon):
-        """Встановлює маркер для лежачого поліцейського"""
+        """
+        Встановлює маркер для лежачого поліцейського.
+
+        Parameters
+        ----------
+        lat : float
+            Широта позиції нерівності.
+        lon : float
+            Довгота позиції нерівності.
+        """
         key = (round(lat, 5), round(lon, 5))
         if key in self.bumps:
             return
@@ -123,7 +150,14 @@ class MapViewApp(App):
 
 
     def build(self):
-        """Ініціалізує мапу MapView(zoom, lat, lon)"""
+        """
+        Ініціалізує мапу.
+
+        Returns
+        -------
+        MapView
+            Ініціалізований об'єкт мапи.
+        """
         self.mapview = MapView(zoom=10, lat=50.4501, lon=30.5234)
         self.mapview.add_layer(self.line_layer, mode="scatter")
         return self.mapview
